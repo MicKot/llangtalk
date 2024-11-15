@@ -20,7 +20,7 @@ def int2float(sound):
 
 def callback(input_data, frame_count, time_info, flags, queue=None):
     if queue is not None:
-        newsound = np.frombuffer(input_data, np.int16)
+        newsound = np.frombuffer(input_data, np.int16) / 32768
         queue.put(newsound)
     return None, pyaudio.paContinue
 

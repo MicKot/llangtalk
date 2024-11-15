@@ -7,6 +7,7 @@ from llangtalk.asr.whisper_asr import WhisperASR
 import numpy as np
 import time
 import logging
+import matplotlib.pyplot as plt
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +23,6 @@ def main(args):
     start = time.perf_counter()
     while time.perf_counter() - start < 5:
         data.extend(microphone.read())
-        # print(data)
     microphone.close()
     print(whisper_asr.predict_audio(np.array(data)))
 
