@@ -1,9 +1,9 @@
 import argparse
-from venv import logger
-from hyperpyyaml import load_hyperpyyaml
-from llangtalk.asr import whisper_asr
-from llangtalk.microphone import Microphone
-from llangtalk.asr.whisper_asr import WhisperASR
+from llangtalk.audio.microphone import Microphone
+from llangtalk.audio.stream import AudioStream
+from llangtalk.asr.huggingface_asr import HuggingfaceASR
+from llangtalk.asr.vad_interface import VADEngine
+from llangtalk.llm.ollama import Ollama
 import numpy as np
 import time
 import logging
@@ -18,16 +18,25 @@ parser.add_argument("--log_level", type=str, help="Log level", default="DEBUG")
 
 def main(args):
     microphone = Microphone(input_device_index=args.input_device_id)
-    whisper_asr = WhisperASR()
+    whisper_asr = HuggingfaceASR()
+    audio_stream = AudioStream(microphone.SAMPLING_RATE, target_rate=16000)
+    vad = VADEngine()
+    llm = Ollama()
+    llm.invoke("Teraz będziemy gadać")
     data = []
     start = time.perf_counter()
     while time.perf_counter() - start < 5:
-        data.extend(microphone.read())
+        audio_stream.process_chunk(microphone.read())
+        vad.process_chunk(audio_stream.audio)
+
     microphone.close()
-    print(whisper_asr.predict_audio(np.array(data)))
+    text = whisper_asr.predict_audio(np.array(data))
+    print("ASR:", text)
+    for chunk in llm.stream(text):
+        print(chunk, flush=True, end="")
 
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    logging.basicConfig(level=args.log_level)
+    logging.basicConfig(level=args.log_level, format="%(asctime)s - %(levelname)s - %(message)s")
     main(args)

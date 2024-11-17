@@ -28,7 +28,7 @@ def callback(input_data, frame_count, time_info, flags, queue=None):
 class Microphone:
     FORMAT = pyaudio.paInt16
     # Network/VAD rate-space
-    RATE_PROCESS = 44100
+    SAMPLING_RATE = 44100
     CHANNELS = 1
     BLOCKS_PER_SECOND = 50
 
@@ -37,19 +37,19 @@ class Microphone:
 
         self.data_queue = Queue()
         self.audio = pyaudio.PyAudio()
-        self.block_size = int(self.RATE_PROCESS / float(self.BLOCKS_PER_SECOND))
-        self.block_size_input = int(self.RATE_PROCESS / float(self.BLOCKS_PER_SECOND))
+        self.block_size = int(self.SAMPLING_RATE / float(self.BLOCKS_PER_SECOND))
+        self.block_size_input = int(self.SAMPLING_RATE / float(self.BLOCKS_PER_SECOND))
 
         logger.info("Creating microphone stream")
         logger.debug(
-            f"Stream with arguments: input_device_index={input_device_index}, format={self.FORMAT}, channels={self.CHANNELS}, rate={self.RATE_PROCESS}, input=True, frames_per_buffer={self.block_size_input}"
+            f"Stream with arguments: input_device_index={input_device_index}, format={self.FORMAT}, channels={self.CHANNELS}, rate={self.SAMPLING_RATE}, input=True, frames_per_buffer={self.block_size_input}"
         )
 
         self.stream = self.audio.open(
             input_device_index=input_device_index,
             format=self.FORMAT,
             channels=self.CHANNELS,
-            rate=self.RATE_PROCESS,
+            rate=self.SAMPLING_RATE,
             input=True,
             frames_per_buffer=self.block_size_input,
             stream_callback=lambda *args: callback(*args, queue=self.data_queue),
