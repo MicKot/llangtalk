@@ -1,4 +1,8 @@
 import logging
+from langchain.chains import ConversationalRetrievalChain, ConversationChain
+from langchain.memory.chat_message_histories.in_memory import ChatMessageHistory
+from langchain.schema import messages_from_dict, messages_to_dict
+from langchain.memory import ConversationBufferMemory
 
 logger = logging.getLogger(__name__)
 
@@ -13,6 +17,12 @@ class LLMEngine:
 
     def __init__(self) -> None:
         pass
+        # self.conversation_chain
+
+    def new_conversation(self):
+        self.conversation_chain = ConversationChain(llm=self.llm, verbose=True, memory=ConversationBufferMemory())
+
+    # def load_conversation(self, conversation):
 
     def invoke(self, text: str) -> str:
         pass

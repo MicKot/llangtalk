@@ -5,9 +5,8 @@ from llangtalk.asr.huggingface_asr import HuggingfaceASR
 from llangtalk.asr.vad_interface import VADEngine
 from llangtalk.llm.ollama import Ollama
 import numpy as np
-import time
 import logging
-import matplotlib.pyplot as plt
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -18,22 +17,32 @@ parser.add_argument("--log_level", type=str, help="Log level", default="DEBUG")
 
 def main(args):
     microphone = Microphone(input_device_index=args.input_device_id)
-    whisper_asr = HuggingfaceASR()
+    whisper_asr = HuggingfaceASR("openai/whisper-medium")
     audio_stream = AudioStream(microphone.SAMPLING_RATE, target_rate=16000)
-    vad = VADEngine()
+    vad = VADEngine(chunk_size=microphone.BLOCK_SIZE)
     llm = Ollama()
     llm.invoke("Teraz będziemy gadać")
-    data = []
-    start = time.perf_counter()
-    while time.perf_counter() - start < 5:
-        audio_stream.process_chunk(microphone.read())
-        vad.process_chunk(audio_stream.audio)
+    while True:
+        resampled_chunk = audio_stream.process_chunk(microphone.read())
+        vad.process_chunk(resampled_chunk)
+        logger.debug(f"Processing chunk {vad.current_chunk_idx}")
+        if vad.POST_SPEECH_TIMEOUT:
+            # we take 0.5s before VAD said that there is speech - it's better for ASR
+            first_chunk_to_take = vad.first_chunk_with_speech - (0.5 / microphone.BLOCKS_PER_SECOND)
+            first_chunk_to_take = int(max(first_chunk_to_take, 0))
+            logger.debug(f"Taking chunks from {first_chunk_to_take}")
+            audio_for_asr = np.concatenate(audio_stream.audio_in_chunks[first_chunk_to_take:])
+            logger.debug(f"Audio for ASR: {audio_for_asr.shape}")
+            text = whisper_asr.predict_audio(audio_for_asr)
+            print(f"ASR: {text}")
+            audio_stream.reset()
+            vad.soft_reset()
+            # check if we should stop so normalize text, remove interpunction
+            print("LLM: ", end="")
+            for chunk in llm.stream(text):
+                print(chunk, flush=True, end="")
 
     microphone.close()
-    text = whisper_asr.predict_audio(np.array(data))
-    print("ASR:", text)
-    for chunk in llm.stream(text):
-        print(chunk, flush=True, end="")
 
 
 if __name__ == "__main__":

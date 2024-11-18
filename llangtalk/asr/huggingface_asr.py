@@ -16,4 +16,5 @@ class HuggingfaceASR(ASREngine):
         )
 
     def predict_audio(self, audio: np.ndarray):
-        return self.model(waveform=torch.from_numpy(audio)).numpy()["text"]
+        # print(audio)
+        return self.model(inputs=audio)["text"]

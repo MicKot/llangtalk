@@ -21,7 +21,7 @@ def int2float(sound):
 def callback(input_data, frame_count, time_info, flags, queue=None):
     if queue is not None:
         newsound = np.frombuffer(input_data, np.int16) / 32768
-        queue.put(newsound)
+        queue.put(newsound.astype(np.float32))
     return None, pyaudio.paContinue
 
 
@@ -31,13 +31,13 @@ class Microphone:
     SAMPLING_RATE = 44100
     CHANNELS = 1
     BLOCKS_PER_SECOND = 50
+    BLOCK_SIZE = 1 / BLOCKS_PER_SECOND
 
     def __init__(self, input_device_index=8):
         self.show_devices()
 
         self.data_queue = Queue()
         self.audio = pyaudio.PyAudio()
-        self.block_size = int(self.SAMPLING_RATE / float(self.BLOCKS_PER_SECOND))
         self.block_size_input = int(self.SAMPLING_RATE / float(self.BLOCKS_PER_SECOND))
 
         logger.info("Creating microphone stream")
