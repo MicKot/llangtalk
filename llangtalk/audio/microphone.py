@@ -1,4 +1,3 @@
-from venv import logger
 import pyaudio
 from queue import Queue
 import numpy as np
@@ -33,11 +32,10 @@ class Microphone:
     BLOCKS_PER_SECOND = 50
     BLOCK_SIZE = 1 / BLOCKS_PER_SECOND
 
-    def __init__(self, input_device_index=8):
-        self.show_devices()
-
+    def __init__(self, input_device_index=9):
         self.data_queue = Queue()
         self.audio = pyaudio.PyAudio()
+        self.show_devices()
         self.block_size_input = int(self.SAMPLING_RATE / float(self.BLOCKS_PER_SECOND))
 
         logger.info("Creating microphone stream")
@@ -69,16 +67,16 @@ class Microphone:
         self.audio.terminate()
 
     def show_devices(self):
-        if logger.level == logging.DEBUG:
-            logger.debug("Show devices")
-            info = self.audio.get_host_api_info_by_index(0)
-            numdevices = info.get("deviceCount")
+        # if logger.level == logging.DEBUG:
+        logger.debug("Show devices")
+        info = self.audio.get_host_api_info_by_index(0)
+        numdevices = info.get("deviceCount")
 
-            for i in range(0, numdevices):
-                if (self.audio.get_device_info_by_host_api_device_index(0, i).get("maxInputChannels")) > 0:
-                    print(
-                        "Input Device id ",
-                        i,
-                        " - ",
-                        self.audio.get_device_info_by_host_api_device_index(0, i).get("name"),
-                    )
+        for i in range(0, numdevices):
+            if (self.audio.get_device_info_by_host_api_device_index(0, i).get("maxInputChannels")) > 0:
+                print(
+                    "Input Device id ",
+                    i,
+                    " - ",
+                    self.audio.get_device_info_by_host_api_device_index(0, i).get("name"),
+                )

@@ -16,7 +16,7 @@ class LLMEngine:
         return super().__new__(cls)
 
     def __init__(self) -> None:
-        pass
+        self._chat_version = False
         # self.conversation_chain
 
     def new_conversation(self):

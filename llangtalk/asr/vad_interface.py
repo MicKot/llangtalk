@@ -37,7 +37,6 @@ class VADEngine:
                 self.internal_audio_buffer = audio_chunk[i:]
                 break
             speech_prob = self.model(chunk, self.sample_rate).item()
-            logger.debug(f"Speech probability: {speech_prob}")
             is_speech = speech_prob > self.speech_threshold
             current_time = self.current_chunk_idx * self.chunk_size
 

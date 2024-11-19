@@ -6,26 +6,26 @@ from llangtalk.asr.vad_interface import VADEngine
 from llangtalk.llm.ollama import Ollama
 import numpy as np
 import logging
-import re
 
 logger = logging.getLogger(__name__)
 
 parser = argparse.ArgumentParser(description="LlamaTalk main script")
-parser.add_argument("--input_device_id", type=int, help="Input device id", default=8)
+parser.add_argument("--input_device_id", type=int, help="Input device id", default=9)
 parser.add_argument("--log_level", type=str, help="Log level", default="DEBUG")
+parser.add_argument("--asr_device", type=str, help="ASR device", default="cuda:0")
+parser.add_argument("--not_chat_version", action="store_false", help="Use not chat version of LLM")
 
 
 def main(args):
     microphone = Microphone(input_device_index=args.input_device_id)
-    whisper_asr = HuggingfaceASR("openai/whisper-medium")
+    whisper_asr = HuggingfaceASR("openai/whisper-small", device=args.asr_device)
     audio_stream = AudioStream(microphone.SAMPLING_RATE, target_rate=16000)
     vad = VADEngine(chunk_size=microphone.BLOCK_SIZE)
-    llm = Ollama()
+    llm = Ollama(chat_version=args.not_chat_version)
     llm.invoke("Teraz będziemy gadać")
     while True:
         resampled_chunk = audio_stream.process_chunk(microphone.read())
         vad.process_chunk(resampled_chunk)
-        logger.debug(f"Processing chunk {vad.current_chunk_idx}")
         if vad.POST_SPEECH_TIMEOUT:
             # we take 0.5s before VAD said that there is speech - it's better for ASR
             first_chunk_to_take = vad.first_chunk_with_speech - (0.5 / microphone.BLOCKS_PER_SECOND)
@@ -40,6 +40,7 @@ def main(args):
             # check if we should stop so normalize text, remove interpunction
             print("LLM: ", end="")
             for chunk in llm.stream(text):
+                print(type(chunk))
                 print(chunk, flush=True, end="")
 
     microphone.close()
