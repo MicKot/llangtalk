@@ -1,11 +1,10 @@
 from numpy import info
-from llangtalk.asr.asr_interface import ASREngine
+from llangtalk.asr.asr_interface import ASR
 import numpy as np
 from transformers import pipeline
-import torch
 
 
-class HuggingfaceASR(ASREngine):
+class HuggingfaceASR(ASR):
     def __init__(self, model="openai/whisper-small", device="cuda", chunk_length_s=30):
 
         self.model = pipeline(
@@ -16,5 +15,4 @@ class HuggingfaceASR(ASREngine):
         )
 
     def predict_audio(self, audio: np.ndarray):
-        # print(audio)
         return self.model(inputs=audio)["text"]

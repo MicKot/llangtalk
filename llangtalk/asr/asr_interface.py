@@ -2,6 +2,6 @@ import io
 import torch
 
 
-class ASREngine:
+class ASR:
     def predict_audio(self, audio: torch.Tensor) -> str:
         pass
