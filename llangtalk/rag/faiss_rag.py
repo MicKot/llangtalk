@@ -46,6 +46,12 @@ class FaissRAG(RAG):
     def find_similar(self, query, k=5):
         return self.vectorstore.similarity_search(query, k)
 
+    def query(self, query, k=5):
+        """Query the RAG system for similar documents."""
+        similar_docs = self.find_similar(query, k)
+        context = "\n".join([doc.page_content for doc in similar_docs])
+        return context
+
     def save(self, full_save=False):
         """Save the RAG system to disk."""
         if full_save:

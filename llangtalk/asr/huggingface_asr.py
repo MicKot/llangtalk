@@ -1,4 +1,3 @@
-from numpy import info
 from llangtalk.asr.asr_interface import ASR
 import numpy as np
 from transformers import pipeline

@@ -17,12 +17,9 @@ class LLMEngine:
 
     def __init__(self) -> None:
         self._chat_version = False
-        # self.conversation_chain
 
     def new_conversation(self):
         self.conversation_chain = ConversationChain(llm=self.llm, verbose=True, memory=ConversationBufferMemory())
-
-    # def load_conversation(self, conversation):
 
     def invoke(self, text: str) -> str:
         pass
