@@ -1,7 +1,6 @@
-## TODO
-- process audio in a loop with vad, and then possibly asr
-- start persistent conversation
-- load convesartion
-- save conversations to db
-- save individual utterances to db
-- load conversation from db 
+# TODO
+
+[ ] Add conversation memory to LLM,
+[ ] Add conversation summary,
+[ ] Add loading conversation,
+[ ] Add saving each text to db,
