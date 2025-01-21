@@ -18,7 +18,9 @@ class OllamaEngine(LLMEngine):
             )
             self._chat_version = True
         else:
-            self.llm_model = OllamaLLM(model=model, temperature=temperature, seed=seed, memory=self.memory)
+            self.llm_model = LLMChain(
+                OllamaLLM(model=model, temperature=temperature, seed=seed), memory=self.memory, prompt=self.prompt
+            )
             self._chat_version = False
 
     def get_response_content(self, llm_response: AIMessageChunk) -> str:
@@ -26,11 +28,10 @@ class OllamaEngine(LLMEngine):
 
 
 if __name__ == "__main__":
-    # Initialize the Ollama instance
     ollama = OllamaEngine(model="llama3.1:8b", chat_version=True, temperature=0)
 
     invoke_response = ollama.invoke("Hello, how are you?")
-    invoke_response2 = ollama.invoke("Can you tell me a joke?")
+    ollama.invoke("Can you tell me a joke?")
 
     ollama.clear_memory()
     invoke_response_second = ollama.invoke("Hello, how are you?")

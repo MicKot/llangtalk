@@ -36,8 +36,9 @@ class LLMEngine:
         # Collect full response for memory
         full_response = ""
         for chunk in response:
-            full_response += chunk.content
-            yield chunk.content
+            print(chunk["text"])
+            full_response += chunk["text"]
+            yield chunk["text"]
 
     def clear_memory(self):
         self.memory.clear()
