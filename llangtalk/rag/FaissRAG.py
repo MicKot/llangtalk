@@ -2,10 +2,9 @@ import logging
 import os
 import pickle
 import faiss
-from langchain.vectorstores import FAISS
+from langchain_community.vectorstores import FAISS
 from langchain.docstore.document import Document
-from langchain.docstore.in_memory import InMemoryDocstore
-from sentence_transformers import SentenceTransformer
+from langchain_community.docstore.in_memory import InMemoryDocstore
 from typing import List
 from llangtalk.rag.rag_interface import RAG
 
@@ -13,15 +12,11 @@ logger = logging.getLogger(__name__)
 
 
 class FaissRAG(RAG):
-    def __init__(self, vectorstore_file: str, metadata_file: str, st_model: str):
+    def __init__(self, vectorstore_file: str, metadata_file: str, st_model: str, st_device: str = "cpu"):
         self.vectorstore_file = vectorstore_file
         self.metadata_file = metadata_file
-        self.st_model = self.load_st_model(st_model)
+        self.st_model = self.load_st_model(st_model, st_device)
         self.vectorstore = self.load_rag(vectorstore_file, metadata_file)
-
-    def load_st_model(self, model_name: str) -> SentenceTransformer:
-        """Load the sentence transformer model."""
-        return SentenceTransformer(model_name)
 
     def load_rag(self, vectorstore_file: str, metadata_file: str):
         """Load the RAG system from disk, or create a new one if not available."""
@@ -57,7 +52,7 @@ class FaissRAG(RAG):
         """Find similar documents for a query."""
         return self.vectorstore.similarity_search(query, k)
 
-    def query(self, query: str, k: int = 5) -> str:
+    def similarity_search_by_text(self, query: str, k: int = 5) -> str:
         """Query the RAG system for similar documents."""
         similar_docs = self.find_similar(query, k)
         return "\n".join([doc.page_content for doc in similar_docs])
@@ -95,7 +90,7 @@ if __name__ == "__main__":
 
     # Test similarity search
     query = "Tell me about AI and ML"
-    results = rag.query(query)
+    results = rag.similarity_search_by_text(query, k=1)
     print(f"\nQuery: {query}")
     print("Results:", results)
 
@@ -109,5 +104,5 @@ if __name__ == "__main__":
         st_model="sentence-transformers/all-MiniLM-L6-v2",
     )
 
-    verification_results = new_rag.query(query)
+    verification_results = new_rag.similarity_search_by_text(query, k=1)
     print("\nVerification Results:", verification_results)

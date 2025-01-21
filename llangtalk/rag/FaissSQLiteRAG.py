@@ -3,6 +3,9 @@ import faiss
 import numpy as np
 import os
 from llangtalk.rag.rag_interface import RAG
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class FaissSQLiteRAG(RAG):
@@ -13,8 +16,9 @@ class FaissSQLiteRAG(RAG):
         vector_dim: int,
         index_path: str = "faiss.index",
         st_model: str = "sentence-transformers/all-MiniLM-L6-v2",
+        st_device: str = "cpu",
     ):
-        self.st_model = self.load_st_model(st_model)
+        self.st_model = self.load_st_model(st_model, st_device=st_device)
         self.db_path = db_path
         self.vector_dim = vector_dim
         self.index_path = index_path
@@ -22,6 +26,7 @@ class FaissSQLiteRAG(RAG):
         self._create_database()
 
     def _load_or_create_index(self):
+
         if os.path.exists(self.index_path):
             return faiss.read_index(self.index_path)
         else:
@@ -45,7 +50,7 @@ class FaissSQLiteRAG(RAG):
     def _save_index(self):
         faiss.write_index(self.index, self.index_path)
 
-    def add_text(self, text: str, vector: np.ndarray):
+    def add_text_to_rag(self, text: str, vector: np.ndarray):
         # Ensure vector is float32
         vector = vector.astype(np.float32)
         conn = sqlite3.connect(self.db_path)
@@ -60,8 +65,6 @@ class FaissSQLiteRAG(RAG):
         # Ensure query vector is float32
         query_vector = query_vector.astype(np.float32)
         distances, indices = self.index.search(query_vector.reshape(1, -1), k)
-        print("Distances:", distances)
-        print("Indices:", indices)
 
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -115,8 +118,8 @@ if __name__ == "__main__":
     # Add texts with vectors
     vector1 = rag.embed_text(text1)
     vector2 = rag.embed_text(text2)
-    rag.add_text(text1, vector1)
-    rag.add_text(text2, vector2)
+    rag.add_text_to_rag(text1, vector1)
+    rag.add_text_to_rag(text2, vector2)
 
     # Perform similarity search by text
     results = rag.similarity_search_by_text(query_text, 1)

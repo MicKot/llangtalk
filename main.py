@@ -4,7 +4,7 @@ from llangtalk.audio.microphone import Microphone
 from llangtalk.audio.stream import AudioStream
 from llangtalk.asr.huggingface_asr import HuggingfaceASR
 from llangtalk.asr.silero_vad import SileroVAD
-from llangtalk.llm.ollama import Ollama
+from llangtalk.llm.ollama_engine import OllamaEngine
 import numpy as np
 import logging
 
@@ -54,7 +54,7 @@ def main(args):
     asr_model = HuggingfaceASR("openai/whisper-small", device=args.asr_device)
     audio_stream = AudioStream(microphone.SAMPLING_RATE, target_rate=16000)
     vad = SileroVAD(chunk_size=microphone.BLOCK_SIZE)
-    llm = Ollama(chat_version=args.not_chat_version)
+    llm = OllamaEngine(chat_version=args.not_chat_version)
     tts = HuggingfaceTTS()
     audio_player = audio_player.AudioPlayer()
     llm.invoke("Teraz będziemy gadać")
