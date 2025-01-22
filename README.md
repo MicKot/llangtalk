@@ -1,5 +1,5 @@
 # TODO
 
-- [ ] Update conversation memory to persistence
+- [ ] Update LLM memory to persistence
 - [ ] Add conversation summary
 - [ ] Add loading conversation
