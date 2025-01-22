@@ -11,11 +11,14 @@ class RAG:
         logger.info(f"Loading SentenceTransformer model from {st_model_path}")
         return SentenceTransformer(st_model_path, device=device)
 
-    def similarity_search(self, query_vector: np.ndarray, k: int):
+    def _similarity_search(self, query_vector: np.ndarray, k: int):
         raise NotImplementedError
 
     def similarity_search_by_text(self, query_text: str, k: int):
         raise NotImplementedError
 
     def add_text_to_rag(self, text: str, vector: np.ndarray):
+        raise NotImplementedError
+
+    def load_or_create_local_rag(self):
         raise NotImplementedError

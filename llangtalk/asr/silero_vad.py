@@ -1,12 +1,12 @@
 import torch
 import numpy as np
 import logging
-from .vad_interface import VAD
+from .vad_interface import StreamingVAD
 
 logger = logging.getLogger(__name__)
 
 
-class SileroVAD(VAD):
+class SileroVAD(StreamingVAD):
     def __init__(
         self, sample_rate=16000, speech_threshold=0.5, post_speech_timeout=0.5, chunk_size=0.02, min_speech_time=0.1
     ):

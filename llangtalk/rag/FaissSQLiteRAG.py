@@ -22,6 +22,8 @@ class FaissSQLiteRAG(RAG):
         self.db_path = db_path
         self.vector_dim = vector_dim
         self.index_path = index_path
+
+    def load_or_create_local_rag(self):
         self.index = self._load_or_create_index()
         self._create_database()
 
@@ -61,7 +63,7 @@ class FaissSQLiteRAG(RAG):
         self.index.add(vector.reshape(1, -1))
         self._save_index()
 
-    def similarity_search(self, query_vector: np.ndarray, k: int = 5):
+    def _similarity_search(self, query_vector: np.ndarray, k: int = 5):
         # Ensure query vector is float32
         query_vector = query_vector.astype(np.float32)
         distances, indices = self.index.search(query_vector.reshape(1, -1), k)
@@ -89,7 +91,8 @@ class FaissSQLiteRAG(RAG):
         conn.close()
         return results
 
-    def check_database_contents(self):
+    def _check_database_contents(self):
+        "DEBUG method to check database contents"
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         cursor.execute("SELECT id, text FROM documents")
@@ -103,7 +106,7 @@ class FaissSQLiteRAG(RAG):
 
     def similarity_search_by_text(self, text: str, k: int = 5):
         query_vector = self.embed_text(text)
-        return self.similarity_search(query_vector, k)
+        return self._similarity_search(query_vector, k)
 
 
 # Example usage
