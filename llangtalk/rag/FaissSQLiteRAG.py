@@ -13,14 +13,13 @@ class FaissSQLiteRAG(RAG):
     def __init__(
         self,
         db_path: str,
-        vector_dim: int,
         index_path: str = "faiss.index",
         st_model: str = "sentence-transformers/all-MiniLM-L6-v2",
         st_device: str = "cpu",
     ):
         self.st_model = self.load_st_model(st_model, st_device=st_device)
         self.db_path = db_path
-        self.vector_dim = vector_dim
+        self.vector_dim = self.get_embdding_dim()
         self.index_path = index_path
 
     def load_or_create_local_rag(self):

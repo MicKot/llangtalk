@@ -9,7 +9,7 @@ class AudioStream:
         self.audio = np.array([], dtype=np.float32)
         self.audio_in_chunks = []
 
-    def process_chunk(self, chunk: np.ndarray) -> np.ndarray:
+    async def process_chunk(self, chunk: np.ndarray) -> np.ndarray:
         """
         Process an audio chunk by resampling it and appending it to the audio stream.
 

@@ -1,5 +1,7 @@
 import argparse
-from llangtalk.audio import audio_player
+from math import log
+from pathlib import Path
+from llangtalk.audio.audio_player import AudioPlayer
 from llangtalk.audio.microphone import Microphone
 from llangtalk.audio.stream import AudioStream
 from llangtalk.asr.huggingface_asr import HuggingfaceASR
@@ -7,7 +9,8 @@ from llangtalk.asr.silero_vad import SileroVAD
 from llangtalk.llm.ollama_engine import OllamaEngine
 import numpy as np
 import logging
-
+import asyncio
+from llangtalk.rag.FaissSQLiteRAG import FaissSQLiteRAG
 from llangtalk.tts.huggingface_tts import HuggingfaceTTS
 
 logger = logging.getLogger(__name__)
@@ -18,6 +21,8 @@ parser.add_argument("--log_level", type=str, help="Log level", default="DEBUG")
 parser.add_argument("--asr_device", type=str, help="ASR device", default="cuda:0")
 parser.add_argument("--tts_device", type=str, help="TTS device", default="cpu")
 parser.add_argument("--not_chat_version", action="store_false", help="Use not chat version of LLM")
+parser.add_argument("--rag_db_path", type=Path, help="Path to the RAG database", default="rag.db")
+parser.add_argument("--rag_folder", type=Path, help="Path to the RAG folder", default="rag")
 parser.add_argument(
     "--st_model",
     type=str,
@@ -49,32 +54,40 @@ def get_audio_for_asr(vad, audio_stream, microphone):
     return None
 
 
-def main(args):
+async def main(args):
+
     microphone = Microphone(input_device_index=args.input_device_id)
     asr_model = HuggingfaceASR("openai/whisper-small", device=args.asr_device)
     audio_stream = AudioStream(microphone.SAMPLING_RATE, target_rate=16000)
     vad = SileroVAD(chunk_size=microphone.BLOCK_SIZE)
     llm = OllamaEngine(chat_version=args.not_chat_version)
     tts = HuggingfaceTTS()
-    audio_player = audio_player.AudioPlayer()
+    audio_player = AudioPlayer()
+    rag = FaissSQLiteRAG(args.rag_db_path, st_model=args.st_model)
     llm.invoke("Teraz będziemy gadać")
-    while True:
-        resampled_chunk = audio_stream.process_chunk(microphone.read())
-        vad.process_chunk(resampled_chunk)
-        audio_for_asr = get_audio_for_asr(vad, audio_stream, microphone)
-        if audio_for_asr is not None:
-            text = asr_model.predict_audio(audio_for_asr)
-            print(f"ASR: {text}")
+    try:
+        while True:
+            chunk = await microphone.read()
+            resampled_chunk = await audio_stream.process_chunk(chunk)
+            vad.process_chunk(resampled_chunk)
+            audio_for_asr = get_audio_for_asr(vad, audio_stream, microphone)
+            if audio_for_asr is not None:
+                text = asr_model.predict_audio(audio_for_asr)
+                print(f"ASR: {text}")
 
-            print("LLM: ", end="")
-            full_text = []
-            for chunk in llm.stream(text):
-                full_text.append(chunk)
-                print(chunk, flush=True, end="")
-            audio_player(tts.generate_audio_from_text(" ".join(full_text)), tts.sample_rate)
+                print("LLM: ", end="")
+                full_text = []
+                for chunk in llm.stream(text):
+                    full_text.append(chunk)
+                    print(chunk, flush=True, end="")
+                audio_player(tts.generate_audio_from_text(" ".join(full_text)), tts.sample_rate)
+    except KeyboardInterrupt:
+        logger.info("Stopping application")
+    finally:
+        microphone.close()
 
 
 if __name__ == "__main__":
     args = parser.parse_args()
     logging.basicConfig(level=args.log_level, format="%(asctime)s - %(levelname)s - %(message)s")
-    main(args)
+    asyncio.run(main(args))
