@@ -12,8 +12,8 @@ class HuggingfaceTTS(TTSEngine):
         if "t5" in model_name:
             embeddings_dataset = load_dataset("Matthijs/cmu-arctic-xvectors", split="validation")
             self.speaker_embedding = torch.tensor(embeddings_dataset[1301]["xvector"]).unsqueeze(0)
-            self.sample_rate = 22050
 
     def generate_audio_from_text(self, text: str = "chłopczyk, co u ciebie?"):
+        super().generate_audio_from_text(text)
         speech = self.synthesiser(text, forward_params={"speaker_embeddings": self.speaker_embedding})
-        return speech["audio"]
+        return speech["audio"], speech["sampling_rate"]

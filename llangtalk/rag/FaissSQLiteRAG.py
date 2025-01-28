@@ -17,7 +17,7 @@ class FaissSQLiteRAG(RAG):
         st_model: str = "sentence-transformers/all-MiniLM-L6-v2",
         st_device: str = "cpu",
     ):
-        self.st_model = self.load_st_model(st_model, st_device=st_device)
+        self.st_model = self.load_st_model(st_model_path=st_model, device=st_device)
         self.db_path = db_path
         self.vector_dim = self.get_embdding_dim()
         self.index_path = index_path

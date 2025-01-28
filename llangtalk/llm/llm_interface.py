@@ -33,11 +33,7 @@ class LLMEngine:
     def stream(self, text: str):
         response = self.llm_model.stream(text)
 
-        # Collect full response for memory
-        full_response = ""
         for chunk in response:
-            print(chunk["text"])
-            full_response += chunk["text"]
             yield chunk["text"]
 
     def clear_memory(self):

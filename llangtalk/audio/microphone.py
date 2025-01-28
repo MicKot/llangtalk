@@ -1,8 +1,8 @@
+from queue import Queue
 import pyaudio
 import numpy as np
 import torch
 import logging
-import asyncio
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +33,7 @@ class Microphone:
     BLOCK_SIZE = 1 / BLOCKS_PER_SECOND
 
     def __init__(self, input_device_index=9):
-        self.data_queue = asyncio.Queue()
+        self.data_queue = Queue()
         self.audio = pyaudio.PyAudio()
         self.show_devices()
         self.block_size_input = int(self.SAMPLING_RATE / float(self.BLOCKS_PER_SECOND))
@@ -58,8 +58,8 @@ class Microphone:
     def start(self):
         self.stream.start_stream()
 
-    async def read(self):
-        return await self.data_queue.get()
+    def read(self):
+        return self.data_queue.get()
 
     def close(self):
         self.stream.stop_stream()

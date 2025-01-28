@@ -12,6 +12,7 @@ import logging
 import asyncio
 from llangtalk.rag.FaissSQLiteRAG import FaissSQLiteRAG
 from llangtalk.tts.huggingface_tts import HuggingfaceTTS
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +21,7 @@ parser.add_argument("--input_device_id", type=int, help="Input device id", defau
 parser.add_argument("--log_level", type=str, help="Log level", default="DEBUG")
 parser.add_argument("--asr_device", type=str, help="ASR device", default="cuda:0")
 parser.add_argument("--tts_device", type=str, help="TTS device", default="cpu")
+parser.add_argument("--llm_device", type=str, help="LLM device", default="cpu")
 parser.add_argument("--not_chat_version", action="store_false", help="Use not chat version of LLM")
 parser.add_argument("--rag_db_path", type=Path, help="Path to the RAG database", default="rag.db")
 parser.add_argument("--rag_folder", type=Path, help="Path to the RAG folder", default="rag")
@@ -57,17 +59,17 @@ def get_audio_for_asr(vad, audio_stream, microphone):
 async def main(args):
 
     microphone = Microphone(input_device_index=args.input_device_id)
-    asr_model = HuggingfaceASR("openai/whisper-small", device=args.asr_device)
+    asr_model = HuggingfaceASR("openai/whisper-medium", device=args.asr_device)
     audio_stream = AudioStream(microphone.SAMPLING_RATE, target_rate=16000)
     vad = SileroVAD(chunk_size=microphone.BLOCK_SIZE)
-    llm = OllamaEngine(chat_version=args.not_chat_version)
+    llm = OllamaEngine(chat_version=args.not_chat_version, device=args.llm_device)
     tts = HuggingfaceTTS()
     audio_player = AudioPlayer()
     rag = FaissSQLiteRAG(args.rag_db_path, st_model=args.st_model)
     llm.invoke("Teraz będziemy gadać")
     try:
         while True:
-            chunk = await microphone.read()
+            chunk = microphone.read()
             resampled_chunk = await audio_stream.process_chunk(chunk)
             vad.process_chunk(resampled_chunk)
             audio_for_asr = get_audio_for_asr(vad, audio_stream, microphone)
@@ -80,7 +82,9 @@ async def main(args):
                 for chunk in llm.stream(text):
                     full_text.append(chunk)
                     print(chunk, flush=True, end="")
-                audio_player(tts.generate_audio_from_text(" ".join(full_text)), tts.sample_rate)
+                full_text = " ".join(full_text)
+                first_sentence = re.split(r"[\?\!\.]", full_text)[0]
+                audio_player.play_audio(*tts.generate_audio_from_text(first_sentence))
     except KeyboardInterrupt:
         logger.info("Stopping application")
     finally:

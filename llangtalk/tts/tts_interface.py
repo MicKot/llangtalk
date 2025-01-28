@@ -11,4 +11,5 @@ class TTSEngine:
         return super().__new__(cls)
 
     def generate_audio_from_text(self, text: str) -> str:
+        logger.info(f"Generating audio from text: {text}")
         pass
